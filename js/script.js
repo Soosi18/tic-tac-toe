@@ -10,8 +10,16 @@ function Square(){
     return {getVal, setVal};
 }
 
-function Player(){
-    let name = w;
+function Player(name, id){
+    name;
+    id;
+    let score = 0;
+    
+    const getScore = () => { return score; }
+    const giveScore = () => { score++; }
+    const getName = () => { return name; }
+    const getId = () => { return id; }
+    return {getScore, giveScore, getName, getId};
 }
 
 const Gameboard = (function(){
@@ -40,9 +48,12 @@ const Gameboard = (function(){
     const placeMarker = (id, row, col) => {
         if (board[row][col].getVal() === 0){
             board[row][col].setVal(id);
+            console.log(`Player ${id}'s move placed on row ${row} column ${col}`);
+            return 1;
         }
         else {
-            console.log("invalid placement");
+            console.log("Invalid placement. Try Again!");
+            return 0;
         }
     }
 
@@ -69,9 +80,9 @@ const Gameboard = (function(){
             win = true;
         }
 
-        if (win){
-            console.log(`Player ${winner} wins!`);
-        }
+        //if (win){
+        //    console.log(`Player ${winner} wins!`);
+        //}
 
         return win;
     }
@@ -79,12 +90,54 @@ const Gameboard = (function(){
     return {getBoard, printBoard, placeMarker, checkWinner};
 })();
 
-Gameboard.placeMarker(2, 0, 0);
-Gameboard.printBoard();
-Gameboard.checkWinner();
-Gameboard.placeMarker(2, 0, 1);
-Gameboard.printBoard();
-Gameboard.checkWinner();
-Gameboard.placeMarker(2, 0, 2);
-Gameboard.printBoard();
-Gameboard.checkWinner();
+
+const GameController = (function(){
+    let p1_name = prompt("Enter Name for Player 1");
+    let p2_name = prompt("Enter name for Player 2");
+    let Player1 = Player(p1_name, 1);
+    let Player2 = Player(p2_name, 2);
+    let Players = [Player1, Player2]
+    let activePlayer = Players[0];
+    let turns = 0;
+
+    const getActivePlayerId = () => { return activePlayer.getId(); }
+    const switchActivePlayer = () => { activePlayer = activePlayer === Players[0] ? Players[1] : Players[0]; }
+    
+    const playMove = () => {
+        let success = false;
+        do{
+            let row = prompt(`${activePlayer.getName()}, which row would you like to play in?`);
+            let col = prompt(`${activePlayer.getName()}, which column would you like to play in?`);
+            success = Gameboard.placeMarker(getActivePlayerId(), row, col);
+        }
+        while (!success)
+        turns++;
+    }
+
+    const playRound = () => {
+        playMove();
+        Gameboard.printBoard();
+        let win = Gameboard.checkWinner();
+        if(win){
+            console.log(`${activePlayer.getName()} Wins!`);
+        }
+        else if (turns === 9){
+            console.log("Match Tied!");
+        }
+        switchActivePlayer();
+        return win;
+    }
+
+    const playGame = () => {
+        let win = false;
+        Gameboard.printBoard();
+        while(!win){
+            win = playRound();
+        }
+    }
+    
+    return {getActivePlayerId, playGame};
+})();
+
+
+GameController.playGame();
