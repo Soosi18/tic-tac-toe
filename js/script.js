@@ -6,7 +6,6 @@ function Square(){
     const setVal = id => {
         val = id;
     }
-
     return {getVal, setVal};
 }
 
@@ -16,15 +15,18 @@ function Player(name, id){
     let score = 0;
     
     const getScore = () => { return score; }
+
     const giveScore = () => { score++; }
+
     const getName = () => { return name; }
+
     const getId = () => { return id; }
+
     return {getScore, giveScore, getName, getId};
 }
 
 const Gameboard = (function(){
     let board = []
-
     for (let i = 0; i < 3; i++){
         board[i] = []
         for (let j = 0; j < 3; j++){
@@ -83,7 +85,6 @@ const Gameboard = (function(){
         if (diagCondition || revDiagCondition){
             win = true;
         }
-
         return win;
     }
 
@@ -92,22 +93,27 @@ const Gameboard = (function(){
 
 
 const GameController = (function(){
-    let p1_name = "a";
-    let p2_name = "b";
-    let Player1 = Player(p1_name, 1);
-    let Player2 = Player(p2_name, 2);
-    let Players = [Player1, Player2]
-    let activePlayer = Players[0];
+    let Players = []
+    let activePlayer;
     let turns = 0;
 
+    const createPlayer = (name, id) => {
+        Players.push(Player(name, id));
+        if (Players.length === 1){
+            activePlayer = Players[0];
+        }
+    }
+
     const getActivePlayer = () => { return activePlayer; }
+
+    const getPlayers = () => { return Players; }
+
     const switchActivePlayer = () => { activePlayer = activePlayer === Players[0] ? Players[1] : Players[0]; }
 
     const playRound = (row, col) => {
         let winner = 0;
-        let success = Gameboard.placeMarker(getActivePlayer().getId(), row, col);
+        Gameboard.placeMarker(getActivePlayer().getId(), row, col);
         turns++;
-        
         let win = Gameboard.checkWinner();
         if(win){
             winner = getActivePlayer().getId();
@@ -123,33 +129,51 @@ const GameController = (function(){
         return winner;
     }
     
-    return {getActivePlayer, playRound};
+    return {createPlayer, getActivePlayer, getPlayers, playRound};
 })();
 
 
 const ScreenController = (function(){
     const turnDiv = document.querySelector(".player-turn");
     const boardDiv = document.querySelector(".board");
+    const scoreDiv = document.querySelector(".score");
+    const submitBtn = document.querySelector("#submit-btn");
+
+    submitBtn.addEventListener("click", e => {
+        e.preventDefault();
+        const form = document.querySelector(".form-container");
+        const nameData = new FormData(form);
+        let nameOne = (nameData.get("p1-name") === "" ? "Player 1" : nameData.get("p1-name"));
+        let nameTwo = (nameData.get("p2-name") === "" ? "Player 2" : nameData.get("p2-name"));
+        GameController.createPlayer(nameOne, 1);
+        GameController.createPlayer(nameTwo, 2);
+        boardDiv.style.display = "grid";
+        form.style.display = "none";
+        updateScreen();
+    });
     
 
-
+    
     const updateScreen = (winner=0) => {
+        let Players = GameController.getPlayers();
+        let activePlayer = GameController.getActivePlayer();
+        let inactivePlayer = Players.filter(player => player !== activePlayer)[0];
         if (winner === 1 || winner === 2){
-            alert(`${GameController.getActivePlayer().getId()} wins!`);
-            GameController.getActivePlayer().giveScore();
+            alert(`${activePlayer.getName()} wins!`);
+            activePlayer.giveScore();
             Gameboard.resetBoard();
         }
-
         if (winner === 3){
             alert("Match Tied!");
             Gameboard.resetBoard();
         }
+
         
         const board = Gameboard.getBoard();
-        const activePlayer = GameController.getActivePlayer().getId();
-
-        turnDiv.textContent = `${activePlayer}'s Turn`;
+        turnDiv.textContent = `${activePlayer.getName()}'s Turn`;
         boardDiv.textContent = "";
+        scoreDiv.textContent = `${activePlayer.getName()} (X)'s Score: ${activePlayer.getScore()}`
+                                + `\n${inactivePlayer.getName()} (O)'s Score: ${inactivePlayer.getScore()}`;
         
         board.forEach((row, i) => {
             row.forEach((cell, j) => {
@@ -170,7 +194,4 @@ const ScreenController = (function(){
             })
         })
     }
-
-    // initial display
-    updateScreen();
 })();
