@@ -9,8 +9,30 @@
 </head>
 <body>
     <div class="container">
+        <div class="header">
+            <h1>Tic-Tac-Toe :&#41;</h1>
+        </div>
+
+        <div class="score"></div>
         <div class="player-turn"></div>
         <div class="board"></div>
+
+        <form class="form-container">
+            <div class="row">
+                <div class="col">
+                    <label for="p1-name">Player 1 &#40;X&#41;</label>
+                    <input type="text" name="p1-name" id="p1-name" class="form-input" placeholder="Player 1">
+                </div>
+                <div class="col">
+                    <label for="p2-name">Player 2 &#40;X&#41;</label>
+                    <input type="text" name="p2-name" id="p2-name" class="form-input" placeholder="Player 2">
+                </div>
+            </div>
+
+            <div class="row">
+                <button type="submit" id="submit-btn">Start Game</button>
+            </div>
+        </form>
     </div>
 </body>
 </html>
