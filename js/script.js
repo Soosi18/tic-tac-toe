@@ -45,15 +45,19 @@ const Gameboard = (function(){
         }
     }
 
+    const resetBoard = () => {
+        board.map(row => row.map(cell => cell.setVal(0)));
+    }
+
     const placeMarker = (id, row, col) => {
         if (board[row][col].getVal() === 0){
             board[row][col].setVal(id);
             console.log(`Player ${id}'s move placed on row ${row} column ${col}`);
-            return 1;
+            return true;
         }
         else {
             console.log("Invalid placement. Try Again!");
-            return 0;
+            return false;
         }
     }
 
@@ -80,64 +84,93 @@ const Gameboard = (function(){
             win = true;
         }
 
-        //if (win){
-        //    console.log(`Player ${winner} wins!`);
-        //}
-
         return win;
     }
 
-    return {getBoard, printBoard, placeMarker, checkWinner};
+    return {getBoard, printBoard, resetBoard, placeMarker, checkWinner};
 })();
 
 
 const GameController = (function(){
-    let p1_name = prompt("Enter Name for Player 1");
-    let p2_name = prompt("Enter name for Player 2");
+    let p1_name = "a";
+    let p2_name = "b";
     let Player1 = Player(p1_name, 1);
     let Player2 = Player(p2_name, 2);
     let Players = [Player1, Player2]
     let activePlayer = Players[0];
     let turns = 0;
 
-    const getActivePlayerId = () => { return activePlayer.getId(); }
+    const getActivePlayer = () => { return activePlayer; }
     const switchActivePlayer = () => { activePlayer = activePlayer === Players[0] ? Players[1] : Players[0]; }
-    
-    const playMove = () => {
-        let success = false;
-        do{
-            let row = prompt(`${activePlayer.getName()}, which row would you like to play in?`);
-            let col = prompt(`${activePlayer.getName()}, which column would you like to play in?`);
-            success = Gameboard.placeMarker(getActivePlayerId(), row, col);
-        }
-        while (!success)
-        turns++;
-    }
 
-    const playRound = () => {
-        playMove();
-        Gameboard.printBoard();
+    const playRound = (row, col) => {
+        let winner = 0;
+        let success = Gameboard.placeMarker(getActivePlayer().getId(), row, col);
+        turns++;
+        
         let win = Gameboard.checkWinner();
         if(win){
-            console.log(`${activePlayer.getName()} Wins!`);
+            winner = getActivePlayer().getId();
+            turns = 0;
+            return winner;
         }
         else if (turns === 9){
-            console.log("Match Tied!");
+            winner = 3;
+            turns = 0;
+            return winner;
         }
         switchActivePlayer();
-        return win;
-    }
-
-    const playGame = () => {
-        let win = false;
-        Gameboard.printBoard();
-        while(!win){
-            win = playRound();
-        }
+        return winner;
     }
     
-    return {getActivePlayerId, playGame};
+    return {getActivePlayer, playRound};
 })();
 
 
-GameController.playGame();
+const ScreenController = (function(){
+    const turnDiv = document.querySelector(".player-turn");
+    const boardDiv = document.querySelector(".board");
+    
+
+
+    const updateScreen = (winner=0) => {
+        if (winner === 1 || winner === 2){
+            alert(`${GameController.getActivePlayer().getId()} wins!`);
+            GameController.getActivePlayer().giveScore();
+            Gameboard.resetBoard();
+        }
+
+        if (winner === 3){
+            alert("Match Tied!");
+            Gameboard.resetBoard();
+        }
+        
+        const board = Gameboard.getBoard();
+        const activePlayer = GameController.getActivePlayer().getId();
+
+        turnDiv.textContent = `${activePlayer}'s Turn`;
+        boardDiv.textContent = "";
+        
+        board.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                const cellBtn = document.createElement("button");
+                cellBtn.classList.add("cell");
+                cellBtn.textContent = cell.getVal() === 0 ? "" : (cell.getVal() === 1 ? "X" : "O");
+                cellBtn.dataset.row = i;
+                cellBtn.dataset.col = j;
+                
+                cellBtn.addEventListener("click", (e) => {
+                    const row = e.target.dataset.row;
+                    const col = e.target.dataset.col;
+                    let winner = GameController.playRound(row, col);
+                    updateScreen(winner);
+                });
+
+                boardDiv.appendChild(cellBtn);    
+            })
+        })
+    }
+
+    // initial display
+    updateScreen();
+})();
