@@ -21,8 +21,10 @@ function Player(name, id){
     const getName = () => { return name; }
 
     const getId = () => { return id; }
+    
+    const resetScore = () => { score = 0; }
 
-    return {getScore, giveScore, getName, getId};
+    return {getScore, giveScore, resetScore, getName, getId};
 }
 
 const Gameboard = (function(){
@@ -128,8 +130,13 @@ const GameController = (function(){
         switchActivePlayer();
         return winner;
     }
+
+    const resetGame = () => {
+        Gameboard.resetBoard();
+        Players.forEach(player => player.resetScore());
+    }
     
-    return {createPlayer, getActivePlayer, getPlayers, playRound};
+    return {createPlayer, getActivePlayer, getPlayers, playRound, resetGame};
 })();
 
 
@@ -137,7 +144,10 @@ const ScreenController = (function(){
     const turnDiv = document.querySelector(".player-turn");
     const boardDiv = document.querySelector(".board");
     const scoreDiv = document.querySelector(".score");
+    let toggleDivs = [turnDiv, scoreDiv];
     const submitBtn = document.querySelector("#submit-btn");
+    const body = document.querySelector("body");
+    const dialog = document.querySelector("#round-end");
 
     submitBtn.addEventListener("click", e => {
         e.preventDefault();
@@ -157,23 +167,12 @@ const ScreenController = (function(){
     const updateScreen = (winner=0) => {
         let Players = GameController.getPlayers();
         let activePlayer = GameController.getActivePlayer();
-        let inactivePlayer = Players.filter(player => player !== activePlayer)[0];
-        if (winner === 1 || winner === 2){
-            alert(`${activePlayer.getName()} wins!`);
-            activePlayer.giveScore();
-            Gameboard.resetBoard();
-        }
-        if (winner === 3){
-            alert("Match Tied!");
-            Gameboard.resetBoard();
-        }
-
         
         const board = Gameboard.getBoard();
         turnDiv.textContent = `${activePlayer.getName()}'s Turn`;
         boardDiv.textContent = "";
-        scoreDiv.textContent = `${activePlayer.getName()} (X)'s Score: ${activePlayer.getScore()}`
-                                + `\n${inactivePlayer.getName()} (O)'s Score: ${inactivePlayer.getScore()}`;
+        scoreDiv.textContent = `${Players[0].getName()}'s Score: ${Players[0].getScore()}`
+                                + `\n${Players[1].getName()}'s Score: ${Players[1].getScore()}`;
         
         board.forEach((row, i) => {
             row.forEach((cell, j) => {
@@ -183,15 +182,47 @@ const ScreenController = (function(){
                 cellBtn.dataset.row = i;
                 cellBtn.dataset.col = j;
                 
-                cellBtn.addEventListener("click", (e) => {
-                    const row = e.target.dataset.row;
-                    const col = e.target.dataset.col;
-                    let winner = GameController.playRound(row, col);
-                    updateScreen(winner);
-                });
+                if (winner === 0){
+                    cellBtn.addEventListener("click", (e) => {
+                        const row = e.target.dataset.row;
+                        const col = e.target.dataset.col;
+                        let winner = GameController.playRound(row, col)
+                        updateScreen(winner);
+                    });
+                }
+                
 
                 boardDiv.appendChild(cellBtn);    
             })
         })
+
+        if (winner === 1 || winner === 2){
+            activePlayer.giveScore();
+            body.style.backgroundColor = "rgba(0,0,0, 0.7)";
+            toggleDivs.forEach(div => {
+                div.style.display = "none";
+            });
+            if (activePlayer.getScore() === 5){
+                dialog.firstChild.textContent = `${activePlayer.getName()} wins the game!`;
+                GameController.resetGame();
+            }
+            else{
+                dialog.firstChild.textContent = `${activePlayer.getName()} wins the round!`;
+                Gameboard.resetBoard();
+            }
+            dialog.showModal();
+            document.querySelector("#continue-btn").addEventListener("click", ()=>{
+                dialog.close();
+                body.style.backgroundColor = "white";
+                toggleDivs.forEach(div => {
+                    div.style.display = "grid";
+                });
+                updateScreen();
+            });
+        }
+        if (winner === 3){
+            turnDiv.textContent = "Match Tied!";
+            Gameboard.resetBoard();
+        }
     }
 })();
