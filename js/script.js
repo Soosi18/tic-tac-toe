@@ -189,6 +189,14 @@ const ScreenController = (function(){
                         let winner = GameController.playRound(row, col)
                         updateScreen(winner);
                     });
+                    cellBtn.addEventListener("mouseenter", () => {
+                        if(cellBtn.textContent === ""){
+                            cellBtn.style.backgroundColor = "lightgrey";
+                        }    
+                    });
+                    cellBtn.addEventListener("mouseout", () => {
+                        cellBtn.style.backgroundColor = "white";
+                    });
                 }
                 
 
@@ -198,7 +206,11 @@ const ScreenController = (function(){
 
         if (winner === 1 || winner === 2){
             activePlayer.giveScore();
-            body.style.backgroundColor = "rgba(0,0,0, 0.7)";
+            //body.style.backgroundColor = "rgba(0,0,0, 0.7)";
+            const cells = boardDiv.children;
+            for (let i = 0; i < cells.length; i++){
+                //cells[i].style.backgroundColor = "rgba(0,0,0, 0.7)";
+            }
             toggleDivs.forEach(div => {
                 div.style.display = "none";
             });
@@ -211,18 +223,22 @@ const ScreenController = (function(){
                 Gameboard.resetBoard();
             }
             dialog.showModal();
-            document.querySelector("#continue-btn").addEventListener("click", ()=>{
-                dialog.close();
-                body.style.backgroundColor = "white";
-                toggleDivs.forEach(div => {
-                    div.style.display = "grid";
-                });
-                updateScreen();
-            });
+            document.querySelector("#continue-btn").addEventListener("click", e => {returnToGame(e)});
+            dialog.addEventListener("cancel", e => {returnToGame(e)});
         }
         if (winner === 3){
             turnDiv.textContent = "Match Tied!";
             Gameboard.resetBoard();
         }
+    }
+
+    const returnToGame = (e) => {
+        e.preventDefault();
+        dialog.close();
+        body.style.backgroundColor = "white";
+        toggleDivs.forEach(div => {
+            div.style.display = "grid";
+        });
+        updateScreen();
     }
 })();
