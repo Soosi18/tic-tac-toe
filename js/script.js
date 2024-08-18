@@ -177,6 +177,8 @@ const ScreenController = (function(){
         boardDiv.textContent = "";
         scoreOne.textContent = `${Players[0].getName()}'s Score: ${Players[0].getScore()}`;
         scoreTwo.textContent = `${Players[1].getName()}'s Score: ${Players[1].getScore()}`;
+        scoreOne.style.display = "block";
+        scoreTwo.style.display = "block";
         
         board.forEach((row, i) => {
             row.forEach((cell, j) => {
