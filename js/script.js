@@ -114,20 +114,24 @@ const GameController = (function(){
 
     const playRound = (row, col) => {
         let winner = 0;
-        Gameboard.placeMarker(getActivePlayer().getId(), row, col);
-        turns++;
+        let success = Gameboard.placeMarker(getActivePlayer().getId(), row, col);
         let win = Gameboard.checkWinner();
         if(win){
             winner = getActivePlayer().getId();
             turns = 0;
             return winner;
         }
-        else if (turns === 9){
+
+        if (success){
+            turns++;
+            switchActivePlayer();
+        }
+
+        if (turns === 9){
             winner = 3;
             turns = 0;
             return winner;
         }
-        switchActivePlayer();
         return winner;
     }
 
@@ -144,10 +148,10 @@ const ScreenController = (function(){
     const turnDiv = document.querySelector(".player-turn");
     const boardDiv = document.querySelector(".board");
     const scoreDiv = document.querySelector(".score");
-    let toggleDivs = [turnDiv, scoreDiv];
+    const [scoreOne, scoreTwo] = scoreDiv.children;
     const submitBtn = document.querySelector("#submit-btn");
-    const body = document.querySelector("body");
     const dialog = document.querySelector("#round-end");
+    const dialogText = document.getElementById("dialog-text");
 
     submitBtn.addEventListener("click", e => {
         e.preventDefault();
@@ -171,8 +175,8 @@ const ScreenController = (function(){
         const board = Gameboard.getBoard();
         turnDiv.textContent = `${activePlayer.getName()}'s Turn`;
         boardDiv.textContent = "";
-        scoreDiv.textContent = `${Players[0].getName()}'s Score: ${Players[0].getScore()}`
-                                + `\n${Players[1].getName()}'s Score: ${Players[1].getScore()}`;
+        scoreOne.textContent = `${Players[0].getName()}'s Score: ${Players[0].getScore()}`;
+        scoreTwo.textContent = `${Players[1].getName()}'s Score: ${Players[1].getScore()}`;
         
         board.forEach((row, i) => {
             row.forEach((cell, j) => {
@@ -189,56 +193,37 @@ const ScreenController = (function(){
                         let winner = GameController.playRound(row, col)
                         updateScreen(winner);
                     });
-                    cellBtn.addEventListener("mouseenter", () => {
-                        if(cellBtn.textContent === ""){
-                            cellBtn.style.backgroundColor = "lightgrey";
-                        }    
-                    });
-                    cellBtn.addEventListener("mouseout", () => {
-                        cellBtn.style.backgroundColor = "white";
-                    });
                 }
                 
-
                 boardDiv.appendChild(cellBtn);    
             })
         })
 
         if (winner === 1 || winner === 2){
             activePlayer.giveScore();
-            //body.style.backgroundColor = "rgba(0,0,0, 0.7)";
-            const cells = boardDiv.children;
-            for (let i = 0; i < cells.length; i++){
-                //cells[i].style.backgroundColor = "rgba(0,0,0, 0.7)";
-            }
-            toggleDivs.forEach(div => {
-                div.style.display = "none";
-            });
             if (activePlayer.getScore() === 5){
-                dialog.firstChild.textContent = `${activePlayer.getName()} wins the game!`;
+                dialogText.textContent = `${activePlayer.getName()} wins the game!`;
                 GameController.resetGame();
             }
             else{
-                dialog.firstChild.textContent = `${activePlayer.getName()} wins the round!`;
+                dialogText.textContent = `${activePlayer.getName()} wins the round!`;
                 Gameboard.resetBoard();
             }
             dialog.showModal();
-            document.querySelector("#continue-btn").addEventListener("click", e => {returnToGame(e)});
-            dialog.addEventListener("cancel", e => {returnToGame(e)});
         }
         if (winner === 3){
             turnDiv.textContent = "Match Tied!";
+            dialogText.textContent = "Round Tied!";
+            dialog.showModal();
             Gameboard.resetBoard();
         }
+        document.querySelector("#continue-btn").addEventListener("click", e => {returnToGame(e)});
+        dialog.addEventListener("cancel", e => {returnToGame(e)});
     }
 
     const returnToGame = (e) => {
         e.preventDefault();
         dialog.close();
-        body.style.backgroundColor = "white";
-        toggleDivs.forEach(div => {
-            div.style.display = "grid";
-        });
         updateScreen();
     }
 })();
